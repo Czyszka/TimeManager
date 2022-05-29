@@ -22,12 +22,42 @@ namespace TimeManager
         {
             ProjectNameTextBox.Text = project.Name;
             ProjectDescriptionTextBox.Text = project.Description;
-            WorkTimeSpanTextBox.Text = project.WorkTimeSpan.ToString(Form1.timeSpanFormat);
+            WorkTimeSpanTextBox.Text = project.WorkTimeSpan?.ToString(Form1.TimeSpanFormat);
         }
         public void UpdateProjectTimeSpanControl(string timeSpan)
         {
             WorkTimeSpanTextBox.Text = timeSpan;
+        }
 
+        public Project? GetProjectFromControls()
+        {
+            if (string.IsNullOrEmpty(ProjectNameTextBox.Text) 
+                || string.IsNullOrEmpty(ProjectDescriptionTextBox.Text)
+                /*|| string.IsNullOrEmpty(WorkTimeSpanTextBox.Text)*/)
+            {
+                return null;
+            }
+
+            Project project = new Project() { Name = ProjectNameTextBox.Text, Description = ProjectDescriptionTextBox.Text};
+
+            if (string.IsNullOrEmpty(WorkTimeSpanTextBox.Text))
+            {
+                project.WorkTimeSpan = TimeSpan.Zero;
+            }
+            else if (TimeSpan.TryParse(WorkTimeSpanTextBox.Text, out TimeSpan ts))
+            {
+                project.WorkTimeSpan = ts;
+            }
+            else
+                project.WorkTimeSpan = null;
+
+            return project;
+        }
+        public void ClearControls()
+        {
+            ProjectNameTextBox.Text = string.Empty;
+            ProjectDescriptionTextBox.Text = string.Empty;
+            WorkTimeSpanTextBox.Text = string.Empty;
         }
     }
 }

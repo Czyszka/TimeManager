@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Diagnostics;
 using TimeManager.Models;
 
@@ -5,44 +6,42 @@ namespace TimeManager
 {
     public partial class Form1 : Form
     {
-        private List<Project> ProjectNames = new List<Project>()
+        private BindingList<Project> projectNames = new BindingList<Project>()
         {
-            new Project() { Name ="Project1", Description = "Description1"},
-            new Project() { Name ="Project2", Description = "Description2"},
-            new Project() { Name ="Project3", Description = "Description3"},
+            new Project() { Name ="Project1", Description = "Description1", WorkTimeSpan = new TimeSpan()},
+            new Project() { Name ="Project2", Description = "Description2", WorkTimeSpan = new TimeSpan()},
+            new Project() { Name ="Project3", Description = "Description3", WorkTimeSpan = new TimeSpan()},
         };
-
-        public static string timeSpanFormat = @"dd\.hh\:mm\:ss";
         private Project selectedProject;
-        private Stopwatch stopwatch;
+
         private DateTime startDate;
         private DateTime lastUpdateDate;
-        
+        private static string timeSpanFormat = @"dd\.hh\:mm\:ss";
+        public static string TimeSpanFormat { get => timeSpanFormat; }
+
         //todo DataBase
         //todo Unit tests
 
         public Form1()
         {
             InitializeComponent();
+            timeSpanFormatLabel.Text = $"Format: {TimeSpanFormat.Replace(@"\", "")}";
 
-            ProjectsListBox.BeginUpdate();
-            foreach (var name in ProjectNames)
-            {
-                ProjectsListBox.Items.Add(name);
-            }
-            ProjectsListBox.EndUpdate();
+            ProjectsListBox.DataSource = projectNames;
+            ProjectsListBox.DisplayMember = "Name";
 
-            stopwatch = new Stopwatch();
-
+            
         }
 
         private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            ArgumentNullException.ThrowIfNull(ProjectsListBox.SelectedItem);
+            if (ProjectsListBox.SelectedItem is not null)
+            {
+                selectedProject = (Project)ProjectsListBox.SelectedItem;
 
-            selectedProject = ProjectsListBox.SelectedItem as Project;
+                projectInfoUserControl.UpdateProjectControls((Project)ProjectsListBox.SelectedItem);
+            }
 
-            projectInfoUserControl.UpdateProjectControls(ProjectsListBox.SelectedItem as Project);
         }
 
         private void CounterStartButton_Click(object sender, EventArgs e)
@@ -70,7 +69,7 @@ namespace TimeManager
         {
             if (selectedProject is null)
             {
-                SessionTimeSpanTextBox.Text = "Select project first.";
+                UserLogLabel.Text = "Select project from list first.";
                 return;
             }
 
@@ -78,12 +77,46 @@ namespace TimeManager
             TimeSpan tsTimeToAdd = currentUpdateDate - lastUpdateDate;
             TimeSpan tsTimeFromStart = currentUpdateDate - startDate;
 
-            selectedProject.WorkTimeSpan = selectedProject.WorkTimeSpan.Add(tsTimeToAdd);
+            selectedProject.WorkTimeSpan = selectedProject.WorkTimeSpan?.Add(tsTimeToAdd);
 
             SessionTimeSpanTextBox.Text = tsTimeFromStart.ToString(timeSpanFormat);
-            projectInfoUserControl.UpdateProjectTimeSpanControl(selectedProject.WorkTimeSpan.ToString(timeSpanFormat));
+            projectInfoUserControl.UpdateProjectTimeSpanControl(selectedProject.WorkTimeSpan?.ToString(TimeSpanFormat));
 
             lastUpdateDate = currentUpdateDate;
+        }
+
+        private void AddNewProjectButton_Click(object sender, EventArgs e)
+        {
+            Project? project = AddNewUserControl.GetProjectFromControls();
+            if (project is not null)
+            {
+                projectNames.Add(project);
+                ProjectsListBox.SelectedItem = project;
+                AddNewUserControl.ClearControls();
+            }
+            else
+                UserLogLabel.Text = "Adding new project fail. Fill in the required project information.";
+        }
+
+        private void UpdateProjectButton_Click(object sender, EventArgs e)
+        {
+            Project? project = projectInfoUserControl.GetProjectFromControls();
+            if (project is not null)
+            {
+                UpdateSelectedProjectProperties(project);
+
+
+            }
+            else
+                UserLogLabel.Text = "Update project fail. Fill in the required project information.";
+        }
+
+        private void UpdateSelectedProjectProperties(Project? project)
+        {
+            selectedProject.Name = project?.Name;
+            selectedProject.Description = project?.Description;
+            selectedProject.WorkTimeSpan = (project?.WorkTimeSpan)?? selectedProject.WorkTimeSpan;
+            projectInfoUserControl.UpdateProjectTimeSpanControl(selectedProject.WorkTimeSpan?.ToString(TimeSpanFormat));
         }
     }
 }
