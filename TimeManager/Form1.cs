@@ -6,13 +6,8 @@ namespace TimeManager
 {
     public partial class Form1 : Form
     {
-        private BindingList<Project> projectNames = new BindingList<Project>()
-        {
-            new Project() { Name ="Project1", Description = "Description1", WorkTimeSpan = new TimeSpan()},
-            new Project() { Name ="Project2", Description = "Description2", WorkTimeSpan = new TimeSpan()},
-            new Project() { Name ="Project3", Description = "Description3", WorkTimeSpan = new TimeSpan()},
-        };
-        private Project selectedProject;
+        private BindingList<Project> projectNames;
+        private Project? selectedProject;
 
         private DateTime startDate;
         private DateTime lastUpdateDate;
@@ -25,12 +20,27 @@ namespace TimeManager
         public Form1()
         {
             InitializeComponent();
-            timeSpanFormatLabel.Text = $"Format: {TimeSpanFormat.Replace(@"\", "")}";
 
+            LoadProjectsList();
+
+            timeSpanFormatLabel.Text = $"Format: {TimeSpanFormat.Replace(@"\", "")}";
+        }
+
+        private void LoadProjectsList()
+        {
+            //projectNames.Add(new Project() { Name = "Project1", Description = "Description1" });
+            //projectNames.Add(new Project() { Name = "Project2", Description = "Description2" });
+            //projectNames.Add(new Project() { Name = "Project3", Description = "Description3" });
+
+            projectNames = new BindingList<Project>(SqliteDataAccess.LoadProjects());
+
+
+            WireUpProjectsList();
+        }
+        private void WireUpProjectsList()
+        {
             ProjectsListBox.DataSource = projectNames;
             ProjectsListBox.DisplayMember = "Name";
-
-            
         }
 
         private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
@@ -91,6 +101,7 @@ namespace TimeManager
             if (project is not null)
             {
                 projectNames.Add(project);
+                SqliteDataAccess.SaveProject(project);
                 ProjectsListBox.SelectedItem = project;
                 AddNewUserControl.ClearControls();
             }
