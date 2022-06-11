@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Throw;
 using TimeManager.Models;
 
 namespace TimeManager
@@ -18,38 +19,35 @@ namespace TimeManager
             InitializeComponent();
         }
 
-        public void UpdateProjectControls(Project project)
+        public void UpdateProjectControls(Project? project)
         {
-            ProjectNameTextBox.Text = project?.Name??null;
-            ProjectDescriptionTextBox.Text = project?.Description??null;
-            WorkTimeSpanTextBox.Text = project?.WorkTimeSpan?.ToString(Form1.TimeSpanFormat)??null;
+            ProjectNameTextBox.Text = project?.Name ?? null;
+            ProjectDescriptionTextBox.Text = project?.Description ?? null;
+            WorkTimeSpanTextBox.Text = project?.WorkTimeSpan.ToString(Form1.TimeSpanFormat) ?? null;
         }
-        public void UpdateProjectTimeSpanControl(string timeSpan)
+        public void UpdateTimeSpanControl(string timeSpan)
         {
             WorkTimeSpanTextBox.Text = timeSpan;
         }
-
-        public Project? GetProjectFromControls()
+        public void UpdateTimeSpanControl(TimeSpan timeSpan)
         {
-            if (string.IsNullOrEmpty(ProjectNameTextBox.Text) 
-                || string.IsNullOrEmpty(ProjectDescriptionTextBox.Text)
-                /*|| string.IsNullOrEmpty(WorkTimeSpanTextBox.Text)*/)
-            {
-                return null;
-            }
+            WorkTimeSpanTextBox.Text = timeSpan.ToString(Form1.TimeSpanFormat);
+        }
+        public Project GetProjectFromControls()
+        {
+            ProjectNameTextBox.Text
+                .ThrowIfNull()
+                .IfEmpty()
+                .IfWhiteSpace();
 
-            Project project = new Project() { Name = ProjectNameTextBox.Text, Description = ProjectDescriptionTextBox.Text};
-
-            if (string.IsNullOrEmpty(WorkTimeSpanTextBox.Text))
-            {
-                project.WorkTimeSpan = TimeSpan.Zero;
-            }
-            else if (TimeSpan.TryParse(WorkTimeSpanTextBox.Text, out TimeSpan ts))
+            Project project = new Project() { Name = ProjectNameTextBox.Text, Description = ProjectDescriptionTextBox.Text };
+            
+            if (TimeSpan.TryParse(WorkTimeSpanTextBox.Text, out TimeSpan ts))
             {
                 project.WorkTimeSpan = ts;
             }
             else
-                project.WorkTimeSpan = null;
+                project.WorkTimeSpan = TimeSpan.Zero;
 
             return project;
         }
@@ -58,6 +56,13 @@ namespace TimeManager
             ProjectNameTextBox.Text = string.Empty;
             ProjectDescriptionTextBox.Text = string.Empty;
             WorkTimeSpanTextBox.Text = string.Empty;
+        }
+
+        public void EnableControls(bool isEnabled = true)
+        {
+            ProjectNameTextBox.Enabled = isEnabled;
+            ProjectDescriptionTextBox.Enabled = isEnabled;
+            WorkTimeSpanTextBox.Enabled = isEnabled;
         }
     }
 }

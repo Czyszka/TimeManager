@@ -39,6 +39,7 @@
             this.UpdateTimeSpanIntervalTimer = new System.Windows.Forms.Timer(this.components);
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.Info = new System.Windows.Forms.TabPage();
+            this.DeleteProjectButton = new System.Windows.Forms.Button();
             this.UpdateProjectButton = new System.Windows.Forms.Button();
             this.projectInfoUserControl = new TimeManager.ProjectInfo();
             this.CounterGroupBox = new System.Windows.Forms.GroupBox();
@@ -47,7 +48,6 @@
             this.AddNewProjectButton = new System.Windows.Forms.Button();
             this.AddNewUserControl = new TimeManager.ProjectInfo();
             this.UserLogLabel = new System.Windows.Forms.Label();
-            this.DeleteProjectButton = new System.Windows.Forms.Button();
             this.tabControl1.SuspendLayout();
             this.Info.SuspendLayout();
             this.CounterGroupBox.SuspendLayout();
@@ -128,6 +128,16 @@
             this.Info.Text = "Info";
             this.Info.UseVisualStyleBackColor = true;
             // 
+            // DeleteProjectButton
+            // 
+            this.DeleteProjectButton.Location = new System.Drawing.Point(372, 166);
+            this.DeleteProjectButton.Name = "DeleteProjectButton";
+            this.DeleteProjectButton.Size = new System.Drawing.Size(74, 29);
+            this.DeleteProjectButton.TabIndex = 8;
+            this.DeleteProjectButton.Text = "Delete";
+            this.DeleteProjectButton.UseVisualStyleBackColor = true;
+            this.DeleteProjectButton.Click += new System.EventHandler(this.DeleteProjectButton_Click);
+            // 
             // UpdateProjectButton
             // 
             this.UpdateProjectButton.Location = new System.Drawing.Point(287, 166);
@@ -205,21 +215,11 @@
             this.UserLogLabel.Size = new System.Drawing.Size(0, 20);
             this.UserLogLabel.TabIndex = 6;
             // 
-            // DeleteProjectButton
-            // 
-            this.DeleteProjectButton.Location = new System.Drawing.Point(372, 166);
-            this.DeleteProjectButton.Name = "DeleteProjectButton";
-            this.DeleteProjectButton.Size = new System.Drawing.Size(74, 29);
-            this.DeleteProjectButton.TabIndex = 8;
-            this.DeleteProjectButton.Text = "Delete";
-            this.DeleteProjectButton.UseVisualStyleBackColor = true;
-            this.DeleteProjectButton.Click += new System.EventHandler(this.DeleteProjectButton_Click);
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(732, 422);
+            this.ClientSize = new System.Drawing.Size(766, 463);
             this.Controls.Add(this.UserLogLabel);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.ProjectListLabel);

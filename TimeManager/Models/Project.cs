@@ -11,7 +11,7 @@ namespace TimeManager.Models
     {
         private string? name;
         private string? description;
-        private TimeSpan? workTimeSpan = new TimeSpan();
+        private TimeSpan workTimeSpan = new TimeSpan();
 
         private long id;
 
@@ -22,13 +22,11 @@ namespace TimeManager.Models
         }
 
         public string? Name { get => name; set { name = value; NotifyPropertyChanged("Name"); } }
-        public string? Description { get => description; set { description = value; NotifyPropertyChanged("Description"); } }
-        public TimeSpan? WorkTimeSpan { get => workTimeSpan; set => workTimeSpan = value; }
-        public int WorkTimeSpanSec { get => Convert.ToInt32(workTimeSpan.Value.TotalSeconds); set { workTimeSpan = TimeSpan.FromSeconds(value);  } }
-       // public int WorkTimeSpanSec { get ; set; }
+        public string? Description { get => description; set { description = value; /*NotifyPropertyChanged("Description"); */} }
+        public TimeSpan WorkTimeSpan { get => workTimeSpan; set => workTimeSpan = value; }
+        public int WorkTimeSpanSec { get => Convert.ToInt32(workTimeSpan.TotalSeconds); set { workTimeSpan = TimeSpan.FromSeconds(value);  } }
 
         public event PropertyChangedEventHandler? PropertyChanged;
-
         private void NotifyPropertyChanged(string p)
         {
             if (PropertyChanged != null)

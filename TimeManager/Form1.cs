@@ -6,15 +6,20 @@ namespace TimeManager
 {
     public partial class Form1 : Form
     {
-        private BindingList<Project> projectNames;
+        private BindingList<Project> projects;
+
         private Project? selectedProject;
+
+        private bool sessionTSCounting = false;
 
         private DateTime startDate;
         private DateTime lastUpdateDate;
         private static string timeSpanFormat = @"dd\.hh\:mm\:ss";
         public static string TimeSpanFormat { get => timeSpanFormat; }
+        public BindingList<Project> Projects { get => projects; set => projects = value; }
 
-        //todo DataBase
+
+
         //todo Unit tests
 
         public Form1()
@@ -24,17 +29,39 @@ namespace TimeManager
             LoadProjectsList();
 
             timeSpanFormatLabel.Text = $"Format: {TimeSpanFormat.Replace(@"\", "")}";
+
+            if (ProjectsListBox.SelectedItem is null)
+            {
+                SetEnabledControls(false);
+            }
         }
 
+        private void SetEnabledControls(bool isEnabled = true)
+        {
+            projectInfoUserControl.EnableControls(isEnabled);
+            CounterButton.Enabled = isEnabled;
+            SessionTimeSpanTextBox.Enabled = isEnabled;
+            UpdateProjectButton.Enabled = isEnabled;
+            DeleteProjectButton.Enabled = isEnabled;
+
+            if (isEnabled)
+            {
+                SessionTimeSpanTextBox.Text = new TimeSpan().ToString(timeSpanFormat);
+            }
+            else
+            {
+                SessionTimeSpanTextBox.Text = String.Empty;
+            }
+        }
         private void LoadProjectsList()
         {
-            projectNames = new BindingList<Project>(SqliteDataAccess.ReadProjects());
+            Projects = new BindingList<Project>(SqliteDataAccess.ReadProjects());
 
             WireUpProjectsList();
         }
         private void WireUpProjectsList()
         {
-            ProjectsListBox.DataSource = projectNames;
+            ProjectsListBox.DataSource = Projects;
             ProjectsListBox.DisplayMember = "Name";
         }
 
@@ -42,15 +69,24 @@ namespace TimeManager
         {
             if (ProjectsListBox.SelectedItem is not null)
             {
+                if (sessionTSCounting)//todo to tak nie dzia³a
+                {
+                    sessionTSCounting = false;
+                    CounterButton.Text = "Start";
+                    UpdateTimeSpanIntervalTimer.Enabled = false;
+                }
+
+
                 selectedProject = (Project)ProjectsListBox.SelectedItem;
 
                 projectInfoUserControl.UpdateProjectControls((Project)ProjectsListBox.SelectedItem);
+                SetEnabledControls();
             }
             else
             {
                 selectedProject = null;
                 projectInfoUserControl.UpdateProjectControls(null);
-
+                SetEnabledControls(false);
             }
 
         }
@@ -59,7 +95,9 @@ namespace TimeManager
         {
             if (CounterButton.Text == "Stop")
             {
+                sessionTSCounting = false;
                 CounterButton.Text = "Start";
+
                 UpdateTimeSpanIntervalTimer.Enabled = false;
                 timer1_Tick(sender, e);//todo think about if stop to save rest of data or abort
             }
@@ -69,6 +107,8 @@ namespace TimeManager
                 {
                     return;
                 }
+
+                sessionTSCounting = true;
                 CounterButton.Text = "Stop";
                 UpdateTimeSpanIntervalTimer.Enabled = true;
                 startDate = lastUpdateDate = DateTime.Now;
@@ -88,10 +128,10 @@ namespace TimeManager
             TimeSpan tsTimeToAdd = currentUpdateDate - lastUpdateDate;
             TimeSpan tsTimeFromStart = currentUpdateDate - startDate;
 
-            selectedProject.WorkTimeSpan = selectedProject.WorkTimeSpan?.Add(tsTimeToAdd);
+            selectedProject.WorkTimeSpan = selectedProject.WorkTimeSpan.Add(tsTimeToAdd);
 
             SessionTimeSpanTextBox.Text = tsTimeFromStart.ToString(timeSpanFormat);
-            projectInfoUserControl.UpdateProjectTimeSpanControl(selectedProject.WorkTimeSpan?.ToString(TimeSpanFormat));
+            projectInfoUserControl.UpdateTimeSpanControl(selectedProject.WorkTimeSpan.ToString(TimeSpanFormat));
 
             lastUpdateDate = currentUpdateDate;
 
@@ -104,10 +144,15 @@ namespace TimeManager
             if (project is not null)
             {
                 project.Id = new IdGen.IdGenerator(0).CreateId();
-                projectNames.Add(project);
+                Projects.Add(project);
                 SqliteDataAccess.CreateProject(project);
-                ProjectsListBox.SelectedItem = project;
-                listBox1_SelectedIndexChanged(this, null);
+
+                if (!sessionTSCounting)
+                {
+                    ProjectsListBox.SelectedItem = project;
+                    listBox1_SelectedIndexChanged(this, null);
+                }
+
 
                 AddNewUserControl.ClearControls();
             }
@@ -117,29 +162,57 @@ namespace TimeManager
 
         private void UpdateProjectButton_Click(object sender, EventArgs e)
         {
-            Project? project = projectInfoUserControl.GetProjectFromControls();
-            if (project is not null)
+            try
             {
+                Project project = projectInfoUserControl.GetProjectFromControls();
+
                 UpdateSelectedProjectProperties(project);
             }
-            else
-                UserLogLabel.Text = "Update project fail. Fill in the required project information.";
+            catch (ArgumentNullException anex)
+            {
+                UserLogLabel.Text = anex.Message;
+            }
+            catch (ArgumentException aex)
+            {
+                UserLogLabel.Text = aex.Message;
+            }
+            catch (Exception ex)
+            {
+                UserLogLabel.Text = ex.Message;
+            }
         }
-
-        private void UpdateSelectedProjectProperties(Project? project)
+        private void UpdateSelectedProjectProperties(Project project)
         {
-            selectedProject.Name = project?.Name;
-            selectedProject.Description = project?.Description;
-            selectedProject.WorkTimeSpan = (project?.WorkTimeSpan)?? selectedProject.WorkTimeSpan;
-            projectInfoUserControl.UpdateProjectTimeSpanControl(selectedProject.WorkTimeSpan?.ToString(TimeSpanFormat));
+            if (selectedProject is null)
+            {
+                return;
+            }
+
+            selectedProject.Name = project.Name;
+            selectedProject.Description = project.Description;
+            selectedProject.WorkTimeSpan = project.WorkTimeSpan;
+
             SqliteDataAccess.UpdateProject(selectedProject);
         }
 
         private void DeleteProjectButton_Click(object sender, EventArgs e)
         {
-            SqliteDataAccess.DeleteProject(selectedProject);
-            projectNames.Remove(selectedProject);
-            listBox1_SelectedIndexChanged(this, null);
+            projectInfoUserControl.ClearControls();
+            projectInfoUserControl.EnableControls(false);
+
+            CounterButton.Text = "Start";
+            SessionTimeSpanTextBox.Text = String.Empty;
+            SessionTimeSpanTextBox.Enabled = false;
+            UpdateTimeSpanIntervalTimer.Enabled = false;
+            sessionTSCounting = false;
+
+            if (selectedProject is not null)
+            {
+                Projects.Remove(selectedProject);
+                SqliteDataAccess.DeleteProject(selectedProject);
+                selectedProject = null;
+            }
+
         }
     }
 }
