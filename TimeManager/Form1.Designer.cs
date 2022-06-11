@@ -43,10 +43,11 @@
             this.projectInfoUserControl = new TimeManager.ProjectInfo();
             this.CounterGroupBox = new System.Windows.Forms.GroupBox();
             this.Add = new System.Windows.Forms.TabPage();
+            this.timeSpanFormatLabel = new System.Windows.Forms.Label();
             this.AddNewProjectButton = new System.Windows.Forms.Button();
             this.AddNewUserControl = new TimeManager.ProjectInfo();
             this.UserLogLabel = new System.Windows.Forms.Label();
-            this.timeSpanFormatLabel = new System.Windows.Forms.Label();
+            this.DeleteProjectButton = new System.Windows.Forms.Button();
             this.tabControl1.SuspendLayout();
             this.Info.SuspendLayout();
             this.CounterGroupBox.SuspendLayout();
@@ -115,6 +116,7 @@
             // 
             // Info
             // 
+            this.Info.Controls.Add(this.DeleteProjectButton);
             this.Info.Controls.Add(this.UpdateProjectButton);
             this.Info.Controls.Add(this.projectInfoUserControl);
             this.Info.Controls.Add(this.CounterGroupBox);
@@ -128,11 +130,11 @@
             // 
             // UpdateProjectButton
             // 
-            this.UpdateProjectButton.Location = new System.Drawing.Point(325, 166);
+            this.UpdateProjectButton.Location = new System.Drawing.Point(287, 166);
             this.UpdateProjectButton.Name = "UpdateProjectButton";
-            this.UpdateProjectButton.Size = new System.Drawing.Size(120, 29);
+            this.UpdateProjectButton.Size = new System.Drawing.Size(74, 29);
             this.UpdateProjectButton.TabIndex = 8;
-            this.UpdateProjectButton.Text = "Save changes";
+            this.UpdateProjectButton.Text = "Save";
             this.UpdateProjectButton.UseVisualStyleBackColor = true;
             this.UpdateProjectButton.Click += new System.EventHandler(this.UpdateProjectButton_Click);
             // 
@@ -168,6 +170,15 @@
             this.Add.Text = "New";
             this.Add.UseVisualStyleBackColor = true;
             // 
+            // timeSpanFormatLabel
+            // 
+            this.timeSpanFormatLabel.AutoSize = true;
+            this.timeSpanFormatLabel.Location = new System.Drawing.Point(288, 169);
+            this.timeSpanFormatLabel.Name = "timeSpanFormatLabel";
+            this.timeSpanFormatLabel.Size = new System.Drawing.Size(119, 20);
+            this.timeSpanFormatLabel.TabIndex = 8;
+            this.timeSpanFormatLabel.Text = "timeSpanFormat";
+            // 
             // AddNewProjectButton
             // 
             this.AddNewProjectButton.Location = new System.Drawing.Point(138, 212);
@@ -194,14 +205,15 @@
             this.UserLogLabel.Size = new System.Drawing.Size(0, 20);
             this.UserLogLabel.TabIndex = 6;
             // 
-            // timeSpanFormatLabel
+            // DeleteProjectButton
             // 
-            this.timeSpanFormatLabel.AutoSize = true;
-            this.timeSpanFormatLabel.Location = new System.Drawing.Point(288, 169);
-            this.timeSpanFormatLabel.Name = "timeSpanFormatLabel";
-            this.timeSpanFormatLabel.Size = new System.Drawing.Size(119, 20);
-            this.timeSpanFormatLabel.TabIndex = 8;
-            this.timeSpanFormatLabel.Text = "timeSpanFormat";
+            this.DeleteProjectButton.Location = new System.Drawing.Point(372, 166);
+            this.DeleteProjectButton.Name = "DeleteProjectButton";
+            this.DeleteProjectButton.Size = new System.Drawing.Size(74, 29);
+            this.DeleteProjectButton.TabIndex = 8;
+            this.DeleteProjectButton.Text = "Delete";
+            this.DeleteProjectButton.UseVisualStyleBackColor = true;
+            this.DeleteProjectButton.Click += new System.EventHandler(this.DeleteProjectButton_Click);
             // 
             // Form1
             // 
@@ -243,5 +255,6 @@
         private Label UserLogLabel;
         private Button UpdateProjectButton;
         private Label timeSpanFormatLabel;
+        private Button DeleteProjectButton;
     }
 }

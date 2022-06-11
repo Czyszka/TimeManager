@@ -28,12 +28,7 @@ namespace TimeManager
 
         private void LoadProjectsList()
         {
-            //projectNames.Add(new Project() { Name = "Project1", Description = "Description1" });
-            //projectNames.Add(new Project() { Name = "Project2", Description = "Description2" });
-            //projectNames.Add(new Project() { Name = "Project3", Description = "Description3" });
-
-            projectNames = new BindingList<Project>(SqliteDataAccess.LoadProjects());
-
+            projectNames = new BindingList<Project>(SqliteDataAccess.ReadProjects());
 
             WireUpProjectsList();
         }
@@ -50,6 +45,12 @@ namespace TimeManager
                 selectedProject = (Project)ProjectsListBox.SelectedItem;
 
                 projectInfoUserControl.UpdateProjectControls((Project)ProjectsListBox.SelectedItem);
+            }
+            else
+            {
+                selectedProject = null;
+                projectInfoUserControl.UpdateProjectControls(null);
+
             }
 
         }
@@ -93,6 +94,8 @@ namespace TimeManager
             projectInfoUserControl.UpdateProjectTimeSpanControl(selectedProject.WorkTimeSpan?.ToString(TimeSpanFormat));
 
             lastUpdateDate = currentUpdateDate;
+
+            SqliteDataAccess.UpdateProject(selectedProject);
         }
 
         private void AddNewProjectButton_Click(object sender, EventArgs e)
@@ -100,9 +103,12 @@ namespace TimeManager
             Project? project = AddNewUserControl.GetProjectFromControls();
             if (project is not null)
             {
+                project.Id = new IdGen.IdGenerator(0).CreateId();
                 projectNames.Add(project);
-                SqliteDataAccess.SaveProject(project);
+                SqliteDataAccess.CreateProject(project);
                 ProjectsListBox.SelectedItem = project;
+                listBox1_SelectedIndexChanged(this, null);
+
                 AddNewUserControl.ClearControls();
             }
             else
@@ -115,8 +121,6 @@ namespace TimeManager
             if (project is not null)
             {
                 UpdateSelectedProjectProperties(project);
-
-
             }
             else
                 UserLogLabel.Text = "Update project fail. Fill in the required project information.";
@@ -128,6 +132,14 @@ namespace TimeManager
             selectedProject.Description = project?.Description;
             selectedProject.WorkTimeSpan = (project?.WorkTimeSpan)?? selectedProject.WorkTimeSpan;
             projectInfoUserControl.UpdateProjectTimeSpanControl(selectedProject.WorkTimeSpan?.ToString(TimeSpanFormat));
+            SqliteDataAccess.UpdateProject(selectedProject);
+        }
+
+        private void DeleteProjectButton_Click(object sender, EventArgs e)
+        {
+            SqliteDataAccess.DeleteProject(selectedProject);
+            projectNames.Remove(selectedProject);
+            listBox1_SelectedIndexChanged(this, null);
         }
     }
 }

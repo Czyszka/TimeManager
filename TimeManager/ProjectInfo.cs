@@ -20,9 +20,9 @@ namespace TimeManager
 
         public void UpdateProjectControls(Project project)
         {
-            ProjectNameTextBox.Text = project.Name;
-            ProjectDescriptionTextBox.Text = project.Description;
-            WorkTimeSpanTextBox.Text = project.WorkTimeSpan?.ToString(Form1.TimeSpanFormat);
+            ProjectNameTextBox.Text = project?.Name??null;
+            ProjectDescriptionTextBox.Text = project?.Description??null;
+            WorkTimeSpanTextBox.Text = project?.WorkTimeSpan?.ToString(Form1.TimeSpanFormat)??null;
         }
         public void UpdateProjectTimeSpanControl(string timeSpan)
         {

@@ -13,10 +13,19 @@ namespace TimeManager.Models
         private string? description;
         private TimeSpan? workTimeSpan = new TimeSpan();
 
+        private long id;
+
+        public long Id
+        {
+            get { return id; }
+            set { id = value; }
+        }
+
         public string? Name { get => name; set { name = value; NotifyPropertyChanged("Name"); } }
         public string? Description { get => description; set { description = value; NotifyPropertyChanged("Description"); } }
         public TimeSpan? WorkTimeSpan { get => workTimeSpan; set => workTimeSpan = value; }
-        public int WotkTimeSpanSec { get => Convert.ToInt32(workTimeSpan.Value.TotalSeconds); }
+        public int WorkTimeSpanSec { get => Convert.ToInt32(workTimeSpan.Value.TotalSeconds); set { workTimeSpan = TimeSpan.FromSeconds(value);  } }
+       // public int WorkTimeSpanSec { get ; set; }
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
