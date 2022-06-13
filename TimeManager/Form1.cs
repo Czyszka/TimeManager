@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using TimeManager.Models;
-
+using Throw;
 namespace TimeManager
 {
     public partial class Form1 : Form
@@ -9,6 +9,7 @@ namespace TimeManager
         private BindingList<Project> projects;
 
         private Project? selectedProject;
+        private Project? projectWithAttachedCounter;
 
         private bool sessionTSCounting = false;
 
@@ -25,6 +26,9 @@ namespace TimeManager
         public Form1()
         {
             InitializeComponent();
+            
+            var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+            this.Text += $" Version {version}";
 
             LoadProjectsList();
 
@@ -38,7 +42,7 @@ namespace TimeManager
 
         private void SetEnabledControls(bool isEnabled = true)
         {
-            projectInfoUserControl.EnableControls(isEnabled);
+            //projectInfoUserControl.EnableControls(isEnabled);
             CounterButton.Enabled = isEnabled;
             SessionTimeSpanTextBox.Enabled = isEnabled;
             UpdateProjectButton.Enabled = isEnabled;
@@ -69,57 +73,61 @@ namespace TimeManager
         {
             if (ProjectsListBox.SelectedItem is not null)
             {
-                if (sessionTSCounting)//todo to tak nie dzia³a
+                if (((Project)ProjectsListBox.SelectedItem).Id != projectWithAttachedCounter?.Id)
                 {
-                    sessionTSCounting = false;
-                    CounterButton.Text = "Start";
                     UpdateTimeSpanIntervalTimer.Enabled = false;
-                }
 
+                    projectWithAttachedCounter = null;
+
+                    CounterButton.Text = "Start";
+                    SessionTimeSpanTextBox.Text = TimeSpan.Zero.ToString(timeSpanFormat);
+                    SessionTimeSpanTextBox.Enabled = false;
+                }
 
                 selectedProject = (Project)ProjectsListBox.SelectedItem;
 
-                projectInfoUserControl.UpdateProjectControls((Project)ProjectsListBox.SelectedItem);
+                projectInfoUserControl.UpdateData(selectedProject.Name,
+                                                  selectedProject.Description,
+                                                  selectedProject.WorkTimeSpan.ToString(TimeSpanFormat));
+                projectInfoUserControl.EnableControls();
                 SetEnabledControls();
             }
-            else
-            {
-                selectedProject = null;
-                projectInfoUserControl.UpdateProjectControls(null);
-                SetEnabledControls(false);
-            }
-
         }
 
         private void CounterStartButton_Click(object sender, EventArgs e)
         {
             if (CounterButton.Text == "Stop")
             {
-                sessionTSCounting = false;
-                CounterButton.Text = "Start";
-
                 UpdateTimeSpanIntervalTimer.Enabled = false;
-                timer1_Tick(sender, e);//todo think about if stop to save rest of data or abort
+
+                projectWithAttachedCounter = null;
+
+                CounterButton.Text = "Start";
+                SessionTimeSpanTextBox.Text = TimeSpan.Zero.ToString(timeSpanFormat);
+                SessionTimeSpanTextBox.Enabled = false;
             }
-            else
+            else if (CounterButton.Text == "Start")
             {
                 if (selectedProject is null)
                 {
                     return;
                 }
 
-                sessionTSCounting = true;
+                projectWithAttachedCounter = selectedProject;
+
                 CounterButton.Text = "Stop";
+                SessionTimeSpanTextBox.Enabled = true;
+
                 UpdateTimeSpanIntervalTimer.Enabled = true;
                 startDate = lastUpdateDate = DateTime.Now;
-                timer1_Tick(sender, e);
             }
         }
 
         private void timer1_Tick(object sender, EventArgs e)
         {
-            if (selectedProject is null)
+            if (projectWithAttachedCounter is null)
             {
+                UpdateTimeSpanIntervalTimer.Enabled = false;
                 UserLogLabel.Text = "Select project from list first.";
                 return;
             }
@@ -128,90 +136,148 @@ namespace TimeManager
             TimeSpan tsTimeToAdd = currentUpdateDate - lastUpdateDate;
             TimeSpan tsTimeFromStart = currentUpdateDate - startDate;
 
-            selectedProject.WorkTimeSpan = selectedProject.WorkTimeSpan.Add(tsTimeToAdd);
+            projectWithAttachedCounter.WorkTimeSpan = projectWithAttachedCounter.WorkTimeSpan.Add(tsTimeToAdd);
 
-            SessionTimeSpanTextBox.Text = tsTimeFromStart.ToString(timeSpanFormat);
-            projectInfoUserControl.UpdateTimeSpanControl(selectedProject.WorkTimeSpan.ToString(TimeSpanFormat));
+            SessionTimeSpanTextBox.Text = tsTimeFromStart.ToString(TimeSpanFormat);
+            projectInfoUserControl.UpdateData(null, null, projectWithAttachedCounter.WorkTimeSpan.ToString(TimeSpanFormat));
 
             lastUpdateDate = currentUpdateDate;
 
-            SqliteDataAccess.UpdateProject(selectedProject);
+            SqliteDataAccess.UpdateProject(projectWithAttachedCounter);
         }
 
         private void AddNewProjectButton_Click(object sender, EventArgs e)
         {
-            Project? project = AddNewUserControl.GetProjectFromControls();
-            if (project is not null)
+            try
             {
-                project.Id = new IdGen.IdGenerator(0).CreateId();
-                Projects.Add(project);
-                SqliteDataAccess.CreateProject(project);
+                var data = AddNewUserControl.GetData();
 
-                if (!sessionTSCounting)
+                data.name
+                    .ThrowIfNull()
+                    .IfEmpty()
+                    .IfWhiteSpace();
+
+                Project newProject = new Project() { Id = new IdGen.IdGenerator(0).CreateId(), Name = data.name, Description = data.description ?? string.Empty };
+
+                //timeSpan Parsing
+                if (string.IsNullOrEmpty(data.timespan))
                 {
-                    ProjectsListBox.SelectedItem = project;
-                    listBox1_SelectedIndexChanged(this, null);
+                    newProject.WorkTimeSpan = TimeSpan.Zero;
+                }
+                else
+                {
+                    TimeSpan.TryParse(data.timespan, out TimeSpan ts)
+                        .Throw(_ => throw new InvalidOperationException($"Failed to parse timespan '{data.timespan}'. Timespan format: {TimeSpanFormat}. "))
+                        .IfFalse();
+                    newProject.WorkTimeSpan = ts;
                 }
 
+                Projects.Add(newProject);
+                SqliteDataAccess.CreateProject(newProject);
 
-                AddNewUserControl.ClearControls();
+                AddNewUserControl.ClearData();
             }
-            else
-                UserLogLabel.Text = "Adding new project fail. Fill in the required project information.";
+            catch (ArgumentNullException anex)
+            {
+                UserLogLabel.Text = $"{anex.ParamName} cannot be null. Fill required information.";
+            }
+            catch (ArgumentException aex)
+            {
+                UserLogLabel.Text = $"{aex.ParamName}: error. Fill required information.";
+            }
+            catch (InvalidOperationException ioex)
+            {
+                UserLogLabel.Text = $"{ioex.Message}";
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         private void UpdateProjectButton_Click(object sender, EventArgs e)
         {
             try
             {
-                Project project = projectInfoUserControl.GetProjectFromControls();
+                selectedProject.ThrowIfNull();
 
-                UpdateSelectedProjectProperties(project);
+                var data = projectInfoUserControl.GetData();
+
+                if(!string.IsNullOrEmpty(data.name))
+                    selectedProject.Name = data.name;
+                if (!string.IsNullOrEmpty(data.name))
+                    selectedProject.Description = data.description;
+
+                //timeSpan Parsing
+                if (!string.IsNullOrEmpty(data.timespan))
+                {
+                    TimeSpan.TryParse(data.timespan, out TimeSpan ts)
+                        .Throw(_ => throw new InvalidOperationException($"Failed to parse timespan '{data.timespan}'. Timespan format: {TimeSpanFormat}. "))
+                        .IfFalse();
+                    selectedProject.WorkTimeSpan = ts;
+                }
+
+                SqliteDataAccess.UpdateProject(selectedProject);
+
+                //Project project = projectInfoUserControl.GetProjectFromControls();
+
+                //UpdateSelectedProjectProperties(project);
             }
             catch (ArgumentNullException anex)
             {
-                UserLogLabel.Text = anex.Message;
+                UserLogLabel.Text = $"{anex.ParamName} cannot be null. Fill required information.";
             }
-            catch (ArgumentException aex)
+            catch (InvalidOperationException ioex)
             {
-                UserLogLabel.Text = aex.Message;
+                UserLogLabel.Text = $"{ioex.Message}";
             }
             catch (Exception ex)
             {
                 UserLogLabel.Text = ex.Message;
             }
         }
-        private void UpdateSelectedProjectProperties(Project project)
-        {
-            if (selectedProject is null)
-            {
-                return;
-            }
-
-            selectedProject.Name = project.Name;
-            selectedProject.Description = project.Description;
-            selectedProject.WorkTimeSpan = project.WorkTimeSpan;
-
-            SqliteDataAccess.UpdateProject(selectedProject);
-        }
 
         private void DeleteProjectButton_Click(object sender, EventArgs e)
         {
-            projectInfoUserControl.ClearControls();
-            projectInfoUserControl.EnableControls(false);
+           //// projectInfoUserControl.ClearControls();
+           // //projectInfoUserControl.EnableControls(false);
 
-            CounterButton.Text = "Start";
-            SessionTimeSpanTextBox.Text = String.Empty;
-            SessionTimeSpanTextBox.Enabled = false;
-            UpdateTimeSpanIntervalTimer.Enabled = false;
-            sessionTSCounting = false;
+           // CounterButton.Text = "Start";
+           // SessionTimeSpanTextBox.Text = String.Empty;
+           // SessionTimeSpanTextBox.Enabled = false;
+           // UpdateTimeSpanIntervalTimer.Enabled = false;
+           // sessionTSCounting = false;
 
-            if (selectedProject is not null)
+           // if (selectedProject is not null)
+           // {
+           //     Projects.Remove(selectedProject);
+           //     SqliteDataAccess.DeleteProject(selectedProject);
+           //     selectedProject = null;
+           // }
+
+            try
             {
+                selectedProject.ThrowIfNull();
+
                 Projects.Remove(selectedProject);
                 SqliteDataAccess.DeleteProject(selectedProject);
+                
                 selectedProject = null;
+
+                projectInfoUserControl.ClearData();
+                projectInfoUserControl.EnableControls(false);
+
+                SetEnabledControls(false);
             }
+            catch (ArgumentNullException anex)
+            {
+                UserLogLabel.Text = $"{anex.ParamName} cannot be null. Fill required information.";
+            }
+            catch (Exception ex)
+            {
+                UserLogLabel.Text = ex.Message;
+            }
+
 
         }
     }

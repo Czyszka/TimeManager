@@ -78,9 +78,9 @@
             this.ProjectListLabel.AutoSize = true;
             this.ProjectListLabel.Location = new System.Drawing.Point(530, 16);
             this.ProjectListLabel.Name = "ProjectListLabel";
-            this.ProjectListLabel.Size = new System.Drawing.Size(83, 20);
+            this.ProjectListLabel.Size = new System.Drawing.Size(87, 20);
             this.ProjectListLabel.TabIndex = 2;
-            this.ProjectListLabel.Text = "ProjectsList";
+            this.ProjectListLabel.Text = "Projects List";
             // 
             // SessionTimeSpanTextBox
             // 
@@ -225,7 +225,7 @@
             this.Controls.Add(this.ProjectListLabel);
             this.Controls.Add(this.ProjectsListBox);
             this.Name = "Form1";
-            this.Text = "Form1";
+            this.Text = "TimeManager";
             this.tabControl1.ResumeLayout(false);
             this.Info.ResumeLayout(false);
             this.CounterGroupBox.ResumeLayout(false);

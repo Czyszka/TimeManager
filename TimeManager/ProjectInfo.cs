@@ -33,36 +33,38 @@ namespace TimeManager
         {
             WorkTimeSpanTextBox.Text = timeSpan.ToString(Form1.TimeSpanFormat);
         }
-        public Project GetProjectFromControls()
+
+        #region Comm
+        public (string name, string description, string timespan) GetData()
         {
-            ProjectNameTextBox.Text
-                .ThrowIfNull()
-                .IfEmpty()
-                .IfWhiteSpace();
-
-            Project project = new Project() { Name = ProjectNameTextBox.Text, Description = ProjectDescriptionTextBox.Text };
-            
-            if (TimeSpan.TryParse(WorkTimeSpanTextBox.Text, out TimeSpan ts))
-            {
-                project.WorkTimeSpan = ts;
-            }
-            else
-                project.WorkTimeSpan = TimeSpan.Zero;
-
-            return project;
+            //todo think about verification if needed
+            return ( ProjectNameTextBox.Text,
+                     ProjectDescriptionTextBox.Text,
+                     WorkTimeSpanTextBox.Text);
         }
-        public void ClearControls()
+        public void UpdateData(string? name, string? description, string? timespan)
+        {
+            if (!string.IsNullOrEmpty(name))
+                ProjectNameTextBox.Text = name;
+
+            if (!string.IsNullOrEmpty(description))
+                ProjectDescriptionTextBox.Text = description;
+
+            if (!string.IsNullOrEmpty(timespan))
+                WorkTimeSpanTextBox.Text = timespan;
+        }
+        public void ClearData()
         {
             ProjectNameTextBox.Text = string.Empty;
             ProjectDescriptionTextBox.Text = string.Empty;
             WorkTimeSpanTextBox.Text = string.Empty;
-        }
-
+        } 
         public void EnableControls(bool isEnabled = true)
         {
             ProjectNameTextBox.Enabled = isEnabled;
             ProjectDescriptionTextBox.Enabled = isEnabled;
             WorkTimeSpanTextBox.Enabled = isEnabled;
         }
+        #endregion
     }
 }
